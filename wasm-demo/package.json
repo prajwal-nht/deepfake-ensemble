@@ -1,0 +1,17 @@
+{
+  "name": "wasm-deepfake-demo",
+  "version": "1.0.0",
+  "description": "WASM-based ML model demo for deepfake detection exploration",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "onnxruntime-web": "^1.17.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

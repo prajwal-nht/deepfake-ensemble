@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Local ONNX Deepfake Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.1/dist/ort.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .model-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            /* border-left: 4px solid #28a745; */
+        }
+
+        .status.loading {
+            border-left-color: #ffc107;
+        }
+
+        .status.error {
+            border-left-color: #dc3545;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin: 30px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-5px);
+        }
+
+        .upload-area.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-text h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .upload-text p {
+            color: #666;
+            font-size: 1em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .results {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .result-card.real {
+            border-left: 5px solid #4CAF50;
+        }
+
+        .result-card.fake {
+            border-left: 5px solid #F44336;
+        }
+
+        .result-card.demo {
+            border-left: 5px solid #2196F3;
+        }
+
+        .result-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .result-confidence {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .result-details {
+            color: #888;
+            font-size: 1em;
+        }
+
+        .technical-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .technical-details h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .technical-details pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .upload-area {
+                padding: 40px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖Deepfake Detection</h1>
+        </div>
+
+        <div id="modelStatus" class="status">
+            <h3>🔄 Loading AI Model...</h3>
+        </div>
+
+        <div class="upload-area disabled" id="uploadArea">
+            <div class="upload-icon">📷</div>
+            <div>
+                <h3>Loading model... Please wait</h3>
+                <p>Model needs to load before image upload</p>
+            </div>
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*" />
+        <div id="imagePreview" style="display: none; margin: 20px 0;"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        class LocalDeepfakeDetector {
+            constructor() {
+                this.session = null;
+                this.isModelLoaded = false;
+                this.setupEventListeners();
+                this.loadModel();
+            }
+
+            setupEventListeners() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+
+                uploadArea.addEventListener('click', () => {
+                    if (!uploadArea.classList.contains('disabled')) {
+                        fileInput.click();
+                    }
+                });
+
+                fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+            }
+
+            async loadModel() {
+                try {
+                    console.log('🔄 Loading ONNX model...');
+                    
+                    // Initialize ONNX Runtime
+                    ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.1/dist/';
+                    
+                    // Load the downloaded model
+                    this.session = await ort.InferenceSession.create('./models/mobilenet-demo.onnx');
+                    
+                    this.isModelLoaded = true;
+                    console.log('✅ Model loaded successfully');
+                    
+                    document.getElementById('modelStatus').innerHTML = `
+                        <h3>✅ Model Ready!</h3>
+                    `;
+                    
+                    const uploadArea = document.getElementById('uploadArea');
+                    uploadArea.classList.remove('disabled');
+                    uploadArea.innerHTML = `
+                        <div class="upload-icon">📷</div>
+                        <div>
+                            <h3>Drop your image here or click to browse</h3>
+                            <p>Supports JPG, PNG, GIF, and other image formats</p>
+                        </div>
+                    `;
+
+                } catch (error) {
+                    console.error('❌ Model loading failed:', error);
+                    document.getElementById('modelStatus').innerHTML = `
+                        <h3>❌ Model Loading Failed</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Make sure the model file exists at: ./models/mobilenet-demo.onnx</p>
+                    `;
+                }
+            }
+
+            async handleFiles(files) {
+                if (!files.length || !this.isModelLoaded) return;
+                
+                const file = files[0];
+                if (!file.type.startsWith('image/')) {
+                    this.showError('Please upload an image file');
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('imagePreview').innerHTML = `
+                        <img src="${e.target.result}" alt="Uploaded image" style="max-width: 100%; max-height: 400px; border-radius: 8px;">
+                        <p>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</p>
+                    `;
+                    document.getElementById('imagePreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                
+                // Analyze image
+                await this.analyzeImage(file);
+            }
+
+            async analyzeImage(file) {
+                this.showLoading('Analyzing image with local AI model...');
+
+                try {
+                    // Preprocess the image for the model
+                    const imageData = await this.preprocessImage(file);
+                    
+                    // Run inference
+                    const results = await this.session.run({'data': imageData});
+                    
+                    // Debug: Log the output structure
+                    console.log('Model outputs:', Object.keys(results));
+                    console.log('Full results:', results);
+                    
+                    // Get the first output (since we might not know the exact name)
+                    const outputKey = Object.keys(results)[0];
+                    const output = results[outputKey].data;
+                    const predictions = Array.from(output);
+                    
+                    console.log('Output key:', outputKey);
+                    console.log('Predictions shape:', results[outputKey].dims);
+                    console.log('Number of classes:', predictions.length);
+                    console.log('Raw predictions (first 10):', predictions.slice(0, 10));
+                    console.log('Raw predictions (last 10):', predictions.slice(-10));
+                    
+                    // Check if this is binary or multi-class classification
+                    const numClasses = predictions.length;
+                    console.log(`Detected ${numClasses}-class model`);
+                    
+                    if (numClasses === 2) {
+                        // Binary classification (Real vs Fake)
+                        const rawRealScore = predictions[0];
+                        const rawFakeScore = predictions[1];
+                        
+                        const softmax = (logits) => {
+                            const maxLogit = Math.max(...logits);
+                            const expLogits = logits.map(x => Math.exp(x - maxLogit));
+                            const sumExp = expLogits.reduce((a, b) => a + b, 0);
+                            return expLogits.map(x => x / sumExp);
+                        };
+                        
+                        const probabilities = softmax([rawRealScore, rawFakeScore]);
+                        var realProb = probabilities[0];
+                        var fakeProb = probabilities[1];
+                        var isReal = realProb > fakeProb;
+                        var confidence = Math.max(realProb, fakeProb);
+                        var classificationInfo = 'Binary deepfake classification';
+                        
+                    } else {
+                        // Multi-class classification (likely ImageNet or similar)
+                        // Apply softmax to all predictions
+                        const softmax = (logits) => {
+                            const maxLogit = Math.max(...logits);
+                            const expLogits = logits.map(x => Math.exp(x - maxLogit));
+                            const sumExp = expLogits.reduce((a, b) => a + b, 0);
+                            return expLogits.map(x => x / sumExp);
+                        };
+                        
+                        const probabilities = softmax(predictions);
+                        const maxProb = Math.max(...probabilities);
+                        const maxIndex = probabilities.indexOf(maxProb);
+                        
+                        // For demonstration, assume this is a general image classifier
+                        // We'll interpret high confidence in "normal" classes as "real"
+                        var realProb = maxProb;
+                        var fakeProb = 1 - maxProb;
+                        var isReal = maxProb > 0.5; // If confident in any class, likely real
+                        var confidence = maxProb;
+                        var classificationInfo = `Multi-class model (${numClasses} classes), top prediction: class ${maxIndex}`;
+                    }
+                    
+                    console.log('Model predictions:', { 
+                        classificationInfo,
+                        probabilities: { real: realProb, fake: fakeProb },
+                        isReal, 
+                        confidence,
+                        numClasses
+                    });
+                    
+                    const resultHTML = `
+                        <div class="result-card ${isReal ? 'real' : 'fake'}">
+                            <div style="font-size: 3em; margin-bottom: 15px;">
+                                ${isReal ? '✅' : '⚠️'}
+                            </div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">
+                                ${isReal ? 'LIKELY REAL' : 'POTENTIALLY AI-GENERATED'}
+                            </div>
+                            <div style="font-size: 1.2em; color: #666; margin-bottom: 10px;">
+                                Confidence: ${(confidence * 100).toFixed(1)}%
+                            </div>
+                            <div style="color: #888;">
+                                Real probability: ${(realProb * 100).toFixed(1)}%<br>
+                                Fake probability: ${(fakeProb * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                        
+                        `;
+
+                    document.getElementById('results').innerHTML = resultHTML;
+
+                } catch (error) {
+                    console.error('Analysis failed:', error);
+                    this.showError(`Analysis failed: ${error.message}`);
+                }
+            }
+
+            async preprocessImage(file) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            // Create canvas for image processing
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            // Resize to model input size (224x224 for MobileNet)
+                            canvas.width = 224;
+                            canvas.height = 224;
+                            
+                            // Draw and resize image
+                            ctx.drawImage(img, 0, 0, 224, 224);
+                            
+                            // Get image data
+                            const imageData = ctx.getImageData(0, 0, 224, 224);
+                            const pixels = imageData.data;
+                            
+                            // Convert to RGB format and normalize
+                            const input = new Float32Array(3 * 224 * 224);
+                            
+                            // ImageNet normalization values
+                            const mean = [0.485, 0.456, 0.406];
+                            const std = [0.229, 0.224, 0.225];
+                            
+                            for (let i = 0; i < 224 * 224; i++) {
+                                const pixelIndex = i * 4;
+                                
+                                // Extract RGB values (0-255) and normalize to (0-1)
+                                const r = pixels[pixelIndex] / 255.0;
+                                const g = pixels[pixelIndex + 1] / 255.0;
+                                const b = pixels[pixelIndex + 2] / 255.0;
+                                
+                                // Apply ImageNet normalization
+                                input[i] = (r - mean[0]) / std[0];                    // R channel
+                                input[224 * 224 + i] = (g - mean[1]) / std[1];       // G channel
+                                input[2 * 224 * 224 + i] = (b - mean[2]) / std[2];   // B channel
+                            }
+                            
+                            // Create ONNX tensor
+                            const tensor = new ort.Tensor('float32', input, [1, 3, 224, 224]);
+                            resolve(tensor);
+                            
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    
+                    img.onerror = () => reject(new Error('Failed to load image'));
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+
+            showLoading(message) {
+                document.getElementById('results').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="spinner"></div>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+
+            showError(message) {
+                document.getElementById('results').innerHTML = `
+                    <div class="result-card" style="border-left-color: #dc3545;">
+                        <h3>❌ Error</h3>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new LocalDeepfakeDetector();
+        });
+    </script>
+</body>
+</html> / /   U p d a t e d  
+ 

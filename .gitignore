@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+Deepfake-API/Deepfake/venv/
+Deepfake-API/Deepfake/deepfake-detection/venv/
+Deepfake-API/Deepfake/deepfake-detection/modal_env/
+
+# Logs
+*.log
+logs/
+Deepfake-API/logs/
+Deepfake-API/Deepfake/logs/
+
+# Environment files with secrets
+.env
+.env.local
+
+# Model weights (large files)
+*.pth
+*.pt
+*.h5
+*.pb
+*.onnx
+models/insightface/*.onnx
+pretrained_models/
+
+# Temporary files
+temp_*/
+debug/
+*_backup/
+*_old/
+*_OLD_BACKUP*/
+
+# Node modules (VERY LARGE)
+node_modules/
+frontend/node_modules/
+wasm-demo/node_modules/
+
+# Frontend build
+frontend/dist/
+frontend/.vercel/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+Deepfake-API/.git/
+frontend/.git/
+
+# Evaluation results
+evaluation_results/
+*_evaluation_results/
+evaluation_plots/
+
+# Temporary pytorch cache
+temp_pytorch/
+
+# Large datasets
+datasets/
+UADFV/
+uadfv_dataset/
