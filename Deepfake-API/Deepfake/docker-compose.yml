@@ -1,0 +1,36 @@
+services:
+  deepfake-api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: deepfake-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Add other environment variables here
+      # - PINECONE_API_KEY=your_key_here
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/temp_frames
+      - /app/app/temp_uploads
+      - /app/app/processed_videos
+    working_dir: /app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

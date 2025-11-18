@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: deepfake-api
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      pip install uvicorn[standard]
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: PYTHONPATH
+        value: "/opt/render/project/src"

@@ -1,0 +1,33 @@
+# Core dependencies
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+pydantic==2.6.1
+python-dotenv==1.0.1
+
+# Computer Vision
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+scikit-image==0.22.0  # For skimage.transform
+
+# PyTorch and Deep Learning
+torch>=2.1.2
+torchvision>=0.16.2
+timm==0.9.12  # For EfficientNet models
+--find-links https://download.pytorch.org/whl/torch_stable.html
+
+# Face Processing
+insightface==0.7.1
+retina-face==0.0.13  # Explicitly specify version
+
+# Model Serving and Processing
+onnxruntime==1.17.0
+transformers>=4.36.0
+
+# Utilities
+einops==0.7.0
+pytubefix==8.13.1
+pinecone>=3.0.0
+
+# Image Processing
+Pillow>=10.0.0  # Required by timm and other image processing libraries

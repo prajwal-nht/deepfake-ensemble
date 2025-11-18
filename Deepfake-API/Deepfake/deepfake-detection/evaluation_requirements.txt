@@ -1,0 +1,13 @@
+# Requirements for 5-model weighted ensemble evaluation
+torch>=2.0.0
+torchvision
+transformers
+scikit-learn
+matplotlib
+pandas
+numpy
+opencv-python-headless
+pillow
+seaborn
+plotly  # For interactive plots
+tqdm    # For progress bars

@@ -1,0 +1,37 @@
+# Model configuration for ensemble deepfake detection
+models:
+  xception:
+    name: "dima806/deepfake_vs_real_image_detection"
+    input_size: 299
+    
+  efficientnet:
+    name: "microsoft/efficientnet-b0"
+    input_size: 224
+    
+  vit:
+    name: "google/vit-base-patch16-224"
+    input_size: 224
+    
+  resnet:
+    name: "microsoft/resnet-50"
+    input_size: 224
+    
+  face_xray:
+    name: "face_xray"
+    input_size: 224
+
+# Detection thresholds
+thresholds:
+  frame_deepfake: 0.7
+  overall_video: 0.5
+
+# Face detection settings
+face_detection:
+  min_confidence: 0.9
+  max_faces: 5
+  
+# Processing settings
+processing:
+  batch_size: 8
+  use_gpu: true
+  max_frame_size: 1920

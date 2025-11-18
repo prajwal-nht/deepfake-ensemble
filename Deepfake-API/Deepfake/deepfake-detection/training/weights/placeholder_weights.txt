@@ -1,0 +1,5 @@
+This is a placeholder file. Please replace with actual model weights.
+
+For development and testing purposes, you can create a symbolic link:
+On Linux/Mac: ln -s /path/to/your/actual/weights.pth model_weights.pth
+On Windows: mklink model_weights.pth "C:\path\to\your\actual\weights.pth"
